@@ -1,4 +1,4 @@
-package ma.kalinin.converter;
+package ma.kalinin.format;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

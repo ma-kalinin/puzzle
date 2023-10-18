@@ -1,4 +1,4 @@
-package ma.kalinin.converter;
+package ma.kalinin.format;
 
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.UtilityClass;
