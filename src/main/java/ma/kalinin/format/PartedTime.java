@@ -3,6 +3,11 @@ package ma.kalinin.format;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.UtilityClass;
 
+/**
+ * For a duration given in seconds, convert it into a human-friendly format, e.g.
+ * 3662 -> 1 hour, 1 minute and 2 seconds
+ * <a href="https://www.codewars.com/kata/52742f58faf5485cae000b9a">more details</a>
+ */
 @UtilityClass
 public class PartedTime {
 

@@ -7,6 +7,10 @@ import lombok.experimental.UtilityClass;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Iterate a n x n array in a coli-like manner, starting from the outside
+ * <a href="https://www.codewars.com/kata/521c2db8ddc89b9b7a0000c1">more details</a>
+ */
 @UtilityClass
 public class CoilIterator {
 

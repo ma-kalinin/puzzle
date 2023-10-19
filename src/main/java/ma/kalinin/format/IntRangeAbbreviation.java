@@ -5,6 +5,10 @@ import java.util.function.IntPredicate;
 
 import static java.util.stream.Collectors.joining;
 
+/**
+ * Given an array of integers, abbreviate those which come in sequence, e.g. 1,2,3,5 -> 1-3,5
+ * <a href="https://www.codewars.com/kata/51ba717bb08c1cd60f00002f">more details</a>
+ */
 public class IntRangeAbbreviation {
     public static String rangeExtraction(int[] ints) {
         if (ints.length < 3) {
