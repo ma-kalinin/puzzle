@@ -5,6 +5,10 @@ import java.util.*;
 import static java.util.Comparator.comparingInt;
 import static java.util.stream.Collectors.toUnmodifiableMap;
 
+/**
+ * Convert Roman numerals to Arabic ones and vice versa, e.g. MMMCMXCIX -> 3999; 1990 -> MCMXC
+ * <a href="https://www.codewars.com/kata/51b66044bce5799a7f000003">more details</a>
+ */
 public class RomanNumeralsConverter {
 
     private record Digit(Integer arabic, String roman) {}
@@ -48,6 +52,8 @@ public class RomanNumeralsConverter {
 
     private static final Map<Integer, String> arabicToRoman = numbers.stream().collect(toUnmodifiableMap(
             Digit::arabic, Digit::roman));
+    private static final Map<String, Integer> romanToArabic = numbers.stream().collect(toUnmodifiableMap(
+            Digit::roman, Digit::arabic));
 
     public static String toRoman(int n) {
         var result = new StringBuilder();
@@ -60,5 +66,31 @@ public class RomanNumeralsConverter {
         }
 
         return result.toString();
+    }
+
+    public static int toArabic(String roman_) {
+        final var sentinel = ' ';
+        final var roman = roman_ + sentinel;
+
+        var previous = "";
+        var current = "";
+        var result = 0;
+
+        for (char c : roman.toCharArray()) {
+            if (!current.isEmpty() && !romanToArabic.containsKey(current)) {
+                throw new IllegalStateException("Invalid numeral: " + current);
+            }
+
+            previous = current;
+            current += c;
+
+            if (!romanToArabic.containsKey(current) || c == sentinel) {
+                result += romanToArabic.get(previous);
+                previous = "";
+                current = String.valueOf(c);
+            }
+        }
+
+        return result;
     }
 }
