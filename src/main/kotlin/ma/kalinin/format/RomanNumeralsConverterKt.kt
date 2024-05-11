@@ -14,26 +14,23 @@ private val romanToArabic: Map<String, Int> = mapOf(
 )
 private val arabicToRoman: Map<Int, String> = romanToArabic.entries.associate { (r, a) -> a to r }
 
-private val regexToReplacement: Map<Regex, String> = mapOf(
-    Regex("IV") to "IIII",
-    Regex("IX") to "VIIII",
-    Regex("XL") to "XXXX",
-    Regex("XC") to "LXXXX",
-    Regex("CD") to "CCCC",
-    Regex("CM") to "DCCCC",
+private val weirdToReplacement: Map<String, String> = mapOf(
+    "IV" to "IIII", "IX" to "VIIII", "XL" to "XXXX", "XC" to "LXXXX", "CD" to "CCCC", "CM" to "DCCCC",
 )
+private val weirdNumeralRegex = weirdToReplacement.keys.joinToString(separator = "|", prefix = "(", postfix = ")").toRegex()
 
 private val romanDigitToArabic: Map<Char, Int> = mapOf(
     'I' to 1, 'V' to 5, 'X' to 10, 'L' to 50, 'C' to 100, 'D' to 500, 'M' to 1000
 )
 
+/** Convert Arabic to Roman numerals, e.g. 1990 -> MCMXC */
 fun toRoman(arabic: Int): String = toRoman(arabic, 10)
 private fun toRoman(arabic: Int, order: Int): String =
     if (arabic == 0) ""
     else (arabic % order).let { toRoman(arabic-it, order*10) + arabicToRoman[it] }
 
-internal fun toArabic(roman: String): Int {
-    var simplified = roman
-    for ((regex, replacement) in regexToReplacement) simplified = simplified.replace(regex, replacement)
-    return simplified.toCharArray().map { romanDigitToArabic[it]!! }.reduce(Integer::sum)
+/** Convert Roman to Arabic numerals, e.g. MCMXC -> 1990 */
+fun toArabic(roman: String): Int {
+    val simplified = roman.replace(weirdNumeralRegex) { m -> weirdToReplacement[m.value]!! }
+    return simplified.toCharArray().sumOf { romanDigitToArabic[it]!! }
 }
