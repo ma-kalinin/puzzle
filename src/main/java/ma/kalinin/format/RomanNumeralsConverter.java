@@ -1,9 +1,12 @@
 package ma.kalinin.format;
 
-import java.util.*;
+import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static java.util.Comparator.comparingInt;
-import static java.util.stream.Collectors.toUnmodifiableMap;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.joining;
 
 /**
  * Convert Roman numerals to Arabic ones and vice versa, e.g. MMMCMXCIX -> 3999; 1990 -> MCMXC
@@ -11,86 +14,88 @@ import static java.util.stream.Collectors.toUnmodifiableMap;
  */
 public class RomanNumeralsConverter {
 
-    private record Digit(Integer arabic, String roman) {}
-    private static final List<Digit> numbers;
-    static {    // build all basic numbers that are necessary to represent an arbitrary number
-        var base = List.of(
-                new Digit(1, "I"),
-                new Digit(5, "V"),
-                new Digit(10, "X"),
-                new Digit(50, "L"),
-                new Digit(100, "C"),
-                new Digit(500, "D"),
-                new Digit(1000, "M")
-        );
+    // Map.of can't take more than 7 pairs, hence this record
+    private record Digit(int arabic, String roman) {}
+    private static final Map<Integer, String> arabicToRoman = Stream.of(
+            new Digit(0, ""),
+            new Digit(1, "I"),
+            new Digit(2, "II"),
+            new Digit(3, "III"),
+            new Digit(4, "IV"),
+            new Digit(5, "V"),
+            new Digit(6, "VI"),
+            new Digit(7, "VII"),
+            new Digit(8, "VIII"),
+            new Digit(9, "IX"),
+            new Digit(10, "X"),
+            new Digit(11, "XI"),
+            new Digit(12, "XII"),
+            new Digit(13, "XIII"),
+            new Digit(20, "XX"),
+            new Digit(30, "XXX"),
+            new Digit(40, "XL"),
+            new Digit(50, "L"),
+            new Digit(60, "LX"),
+            new Digit(70, "LXX"),
+            new Digit(80, "LXXX"),
+            new Digit(90, "XC"),
+            new Digit(100, "C"),
+            new Digit(110, "CX"),
+            new Digit(120, "CXX"),
+            new Digit(130, "CXXX"),
+            new Digit(200, "CC"),
+            new Digit(300, "CCC"),
+            new Digit(400, "CD"),
+            new Digit(500, "D"),
+            new Digit(600, "DC"),
+            new Digit(700, "DCC"),
+            new Digit(800, "DCCC"),
+            new Digit(900, "CM"),
+            new Digit(1000, "M"),
+            new Digit(1100, "MC"),
+            new Digit(1200, "MCC"),
+            new Digit(1300, "MCCC"),
+            new Digit(2000, "MM"),
+            new Digit(3000, "MMM")
+    ).collect(Collectors.toUnmodifiableMap(Digit::arabic, Digit::roman));
 
-        var result = new ArrayList<>(base);
-        result.add(new Digit(4, "IV"));
-        result.add(new Digit(9, "IX"));
-        result.add(new Digit(40, "XL"));
-        result.add(new Digit(90, "XC"));
-        result.add(new Digit(400, "CD"));
-        result.add(new Digit(900, "CM"));
+    // String.chars() returns IntStream, hence the casts
+    private static final Map<Integer, Integer> simpleRomanToArabic = Map.of(
+            (int) 'I', 1,
+            (int) 'V', 5,
+            (int) 'X', 10,
+            (int) 'L', 50,
+            (int) 'C', 100,
+            (int) 'D', 500,
+            (int) 'M', 1000
+    );
 
-        for (int i = 0; i < base.size(); i++) {    // build numbers like VI, VII, VIII etc
-            var isEven = i % 2 == 0;
-            Digit current = base.get(i);
+    private static final Map<String, String> weirdToSimple = Map.of(
+            "IV", "IIII",
+            "IX", "VIIII",
+            "XL", "XXXX",
+            "XC", "LXXXX",
+            "CD", "CCCC",
+            "CM", "DCCCC"
+    );
+    private static final Pattern weirdNumeralRegex = weirdToSimple.keySet().stream().collect(
+            collectingAndThen(joining("|", "(", ")"), Pattern::compile));
 
-            var roman = isEven ? "" : current.roman;
-            var arabic = isEven ? 0 : current.arabic;
-            Digit toAppend = isEven ? current : base.get(i - 1);
-
-            for (int k = 0; k < 3; k++) {
-                roman += toAppend.roman;
-                arabic += toAppend.arabic;
-                result.add(new Digit(arabic, roman));
-            }
-        }
-
-        numbers = result.stream().distinct().sorted(comparingInt(Digit::arabic).reversed()).toList();
-    }
-
-    private static final Map<Integer, String> arabicToRoman = numbers.stream().collect(toUnmodifiableMap(
-            Digit::arabic, Digit::roman));
-    private static final Map<String, Integer> romanToArabic = numbers.stream().collect(toUnmodifiableMap(
-            Digit::roman, Digit::arabic));
-
-    public static String toRoman(int n) {
-        var result = new StringBuilder();
-        var remainder = n;
+    public static String toRoman(int arabic) {
+        final var result = new StringBuilder();
+        var remainder = arabic;
 
         for (int order = 10; remainder > 0; order *= 10) {
             int part = remainder % order;
             remainder -= part;
-            result.insert(0, arabicToRoman.getOrDefault(part, ""));
+            result.insert(0, arabicToRoman.get(part));
         }
 
         return result.toString();
     }
 
-    public static int toArabic(String roman_) {
-        final var sentinel = ' ';
-        final var roman = roman_ + sentinel;
-
-        var previous = "";
-        var current = "";
-        var result = 0;
-
-        for (char c : roman.toCharArray()) {
-            if (!current.isEmpty() && !romanToArabic.containsKey(current)) {
-                throw new IllegalStateException("Invalid numeral: " + current);
-            }
-
-            previous = current;
-            current += c;
-
-            if (!romanToArabic.containsKey(current) || c == sentinel) {
-                result += romanToArabic.get(previous);
-                previous = "";
-                current = String.valueOf(c);
-            }
-        }
-
-        return result;
+    public static int toArabic(String roman) {
+        String simplified = weirdNumeralRegex.matcher(roman).replaceAll(m -> weirdToSimple.get(m.group()));
+        return (int) simplified.chars().mapToLong(simpleRomanToArabic::get).sum();
     }
 }
